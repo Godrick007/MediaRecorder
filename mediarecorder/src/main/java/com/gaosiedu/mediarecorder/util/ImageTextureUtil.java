@@ -39,6 +39,10 @@ public class ImageTextureUtil {
 
     public static int loadBitmapTexture2D(Bitmap bitmap){
 
+        if(bitmap == null){
+            return -1;
+        }
+
         int[] textureIds  = new int[1];
 
         GLES20.glGenTextures(1,textureIds,0);

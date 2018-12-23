@@ -1,8 +1,10 @@
 package com.gaosiedu.mediarecorder.encoder;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 
 import com.gaosiedu.mediarecorder.render.BaseEGLRender;
+import com.gaosiedu.mediarecorder.render.EncodeRender;
 
 
 public class MediaEncode extends BaseMediaEncoder {
@@ -16,4 +18,12 @@ public class MediaEncode extends BaseMediaEncoder {
         setRender(encodeRender);
         setRenderMode(RenderMode.RENDER_MODE_CONTINUOUSLY);
     }
+
+
+    public void setStickers(Bitmap b1, Bitmap b2){
+        ((EncodeRender)encodeRender).addSticker1(b1);
+        ((EncodeRender)encodeRender).addSticker2(b2);
+    }
+
+
 }

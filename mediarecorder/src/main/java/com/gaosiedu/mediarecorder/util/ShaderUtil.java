@@ -111,10 +111,10 @@ public class ShaderUtil {
 
 //            int[] linkStatus = new int[1];
 //
-//            GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, linkStatus, 0);
+//            GLES20.glGetProgramiv(PROGRAM, GLES20.GL_LINK_STATUS, linkStatus, 0);
 //            if (linkStatus[0] != GLES20.GL_TRUE) {
-//                Log.e("gl", "program link error");
-//                GLES20.glDeleteProgram(program);
+//                Log.e("gl", "PROGRAM link error");
+//                GLES20.glDeleteProgram(PROGRAM);
 //                return 0;
 //            }
         }

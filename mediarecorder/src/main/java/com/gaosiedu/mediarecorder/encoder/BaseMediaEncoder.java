@@ -123,7 +123,8 @@ public abstract class BaseMediaEncoder {
         if(audioThread != null &&
                 !audioThread.isExit &&
                 buffer != null &&
-                size >= 0){
+                size >= 0 &&
+                encoderStart){
 
             int inputBufferIndex = audioCodec.dequeueInputBuffer(0);
             if(inputBufferIndex >= 0){
@@ -244,62 +245,67 @@ public abstract class BaseMediaEncoder {
         public void run() {
             super.run();
 
-            isExit = false;
-            isStart = false;
-            eglHelper = new EglHelper();
-            lock = new Object();
-            eglHelper.initEgl(
-                    encoder.get().mSurface,
-                    encoder.get().mEglContext
-            );
 
-            while(true){
 
-                if(isExit){
-                    release();
-                    break;
-                }
+            try{
 
-                if(isStart){
+                isExit = false;
+                isStart = false;
+                eglHelper = new EglHelper();
+                lock = new Object();
+                eglHelper.initEgl(
+                        encoder.get().mSurface,
+                        encoder.get().mEglContext
+                );
 
-                    if(encoder.get().mRenderMode == RenderMode.RENDER_MODE_WHEN_DIRTY){
 
-                        synchronized (lock){
+                while(true){
+
+                    if(isExit){
+                        release();
+                        break;
+                    }
+
+                    if(isStart){
+
+                        if(encoder.get().mRenderMode == RenderMode.RENDER_MODE_WHEN_DIRTY){
+
+                            synchronized (lock){
+
+                                try {
+                                    lock.wait();
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+
+                            }
+
+
+
+                        }else{
 
                             try {
-                                lock.wait();
+                                Thread.sleep(1000 / 60);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
 
                         }
 
-
-
-                    }else{
-
-                        try {
-                            Thread.sleep(1000 / 60);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-
                     }
+
+
+                    onCreate();
+                    onChange(encoder.get().width,encoder.get().height);
+                    onDrawFrame();
+
+                    isStart = true;
 
                 }
 
-
-                onCreate();
-                onChange(encoder.get().width,encoder.get().height);
-                onDrawFrame();
-
-                isStart = true;
-
+            }catch (Exception e){
 
             }
-
-
-
         }
 
 
@@ -390,89 +396,102 @@ public abstract class BaseMediaEncoder {
 
         @Override
         public void run() {
-            super.run();
-            isExit = false;
-            this.videoCodec.start();
-            videoTrackIndex = -1;
-            pts = 0;
 
-            while(true){
 
-                if(isExit){
+            try{
+                super.run();
+                isExit = false;
+                this.videoCodec.start();
+                videoTrackIndex = -1;
+                pts = 0;
 
-                    videoCodec.stop();
-                    videoCodec.release();
-                    videoCodec = null;
+                while(true){
 
-                    encoder.get().videoExit = true;
-                    if(encoder.get().audioExit){
-                        Log.e("base media encoder","video thread exit");
-                        mediaMuxer.stop();
-                        mediaMuxer.release();
-                        mediaMuxer = null;
+                    if(isExit){
+
+                        videoCodec.stop();
+                        videoCodec.release();
+                        videoCodec = null;
+
+                        encoder.get().videoExit = true;
+                        if(encoder.get().audioExit){
+                            Log.e("base media encoder","video thread exit");
+                            mediaMuxer.stop();
+                            mediaMuxer.release();
+                            mediaMuxer = null;
+                        }
+
+                        break;
                     }
 
-                    break;
-                }
 
+                    int outputBufferIndex = videoCodec.dequeueOutputBuffer(videoBufferInfo,0);
 
-                int outputBufferIndex = videoCodec.dequeueOutputBuffer(videoBufferInfo,0);
+                    if(outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
 
-                if(outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
+                        videoTrackIndex = mediaMuxer.addTrack(videoCodec.getOutputFormat());
 
-                    videoTrackIndex = mediaMuxer.addTrack(videoCodec.getOutputFormat());
-
-                    //test
+                        //test
 
 //                    mediaMuxer.start();
 //                    encoder.get().encoderStart = true;
 //                    Log.e("base media encoder","video thread start");
 
 
-                    if(encoder.get().audioThread.audioTrackIndex != -1){
-                        mediaMuxer.start();
-                        encoder.get().encoderStart = true;
-                        Log.e("base media encoder","video thread start");
-                    }
-
-
-                }else{
-
-                    while (outputBufferIndex >= 0){
-
-                        if(encoder.get().encoderStart){
-
-                            ByteBuffer outputBuffer = videoCodec.getOutputBuffers()[outputBufferIndex];
-                            outputBuffer.position(videoBufferInfo.offset);
-                            outputBuffer.limit(videoBufferInfo.offset + videoBufferInfo.size);
-
-                            //encode
-                            if(pts == 0){
-                                pts = videoBufferInfo.presentationTimeUs;
-                            }
-
-                            videoBufferInfo.presentationTimeUs = videoBufferInfo.presentationTimeUs - pts;
-
-                            mediaMuxer.writeSampleData(videoTrackIndex,outputBuffer,videoBufferInfo);
-
-                            if(encoder.get().onMediaInfoListener != null){
-                                encoder.get().onMediaInfoListener.onMediaTime((int) (videoBufferInfo.presentationTimeUs  / 1000000));
-                            }
-
-
+                        if(encoder.get().audioThread.audioTrackIndex != -1){
+                            mediaMuxer.start();
+                            encoder.get().encoderStart = true;
+                            Log.e("base media encoder","video thread start");
                         }
 
 
-                        videoCodec.releaseOutputBuffer(outputBufferIndex,false);
-                        outputBufferIndex = videoCodec.dequeueOutputBuffer(videoBufferInfo,0);
+                    }else{
+
+                        while (outputBufferIndex >= 0){
+
+                            if(encoder.get().encoderStart){
+
+                                ByteBuffer outputBuffer = videoCodec.getOutputBuffers()[outputBufferIndex];
+                                outputBuffer.position(videoBufferInfo.offset);
+                                outputBuffer.limit(videoBufferInfo.offset + videoBufferInfo.size);
+
+                                //encode
+                                if(pts == 0){
+                                    pts = videoBufferInfo.presentationTimeUs;
+                                }
+
+                                videoBufferInfo.presentationTimeUs = videoBufferInfo.presentationTimeUs - pts;
+
+                                mediaMuxer.writeSampleData(videoTrackIndex,outputBuffer,videoBufferInfo);
+
+                                if(encoder.get().onMediaInfoListener != null){
+                                    encoder.get().onMediaInfoListener.onMediaTime((int) (videoBufferInfo.presentationTimeUs  / 1000000));
+                                }
+
+
+                            }
+
+
+                            videoCodec.releaseOutputBuffer(outputBufferIndex,false);
+                            outputBufferIndex = videoCodec.dequeueOutputBuffer(videoBufferInfo,0);
+
+                        }
 
                     }
 
                 }
 
 
+            }catch (Exception e){
+
+                e.printStackTrace();
+
+            }finally {
 
             }
+
+
+
 
         }
 
@@ -507,69 +526,77 @@ public abstract class BaseMediaEncoder {
         @Override
         public void run() {
             super.run();
-            pts = 0;
-            isExit = false;
-            mediaCodec.start();
-            while (true){
-
-                if(isExit){
-
-                    mediaCodec.stop();
-                    mediaCodec.release();
-                    mediaCodec = null;
 
 
-                    encoder.get().audioExit = true;
-                    if(encoder.get().videoExit){
-                        Log.e("base media encoder","audio thread exit");
-                        mediaMuxer.stop();
-                        mediaMuxer.release();
-                        mediaMuxer = null;
-                    }
-                    break;
-                }
+            try{
 
-                int outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo,0);
+                pts = 0;
+                isExit = false;
+                mediaCodec.start();
 
-                if(outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
+                while (true){
 
-                    audioTrackIndex = mediaMuxer.addTrack(mediaCodec.getOutputFormat());
-                    if(encoder.get().videoThread.videoTrackIndex != -1){
-                        Log.e("base media encoder","audio thread start");
-                        mediaMuxer.start();
-                        encoder.get().encoderStart = true;
-                    }
+                    if(isExit){
+
+                        mediaCodec.stop();
+                        mediaCodec.release();
+                        mediaCodec = null;
 
 
-                }else{
-
-                    while(outputBufferIndex >= 0 ){
-
-                        if(encoder.get().encoderStart){
-
-                            ByteBuffer outputBuffer = mediaCodec.getOutputBuffers()[outputBufferIndex];
-                            outputBuffer.position(bufferInfo.offset);
-                            outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
-
-                            //encode
-                            if(pts == 0){
-                                pts = bufferInfo.presentationTimeUs;
-                            }
-
-                            bufferInfo.presentationTimeUs = bufferInfo.presentationTimeUs - pts;
-
-                            mediaMuxer.writeSampleData(audioTrackIndex,outputBuffer,bufferInfo);
-
+                        encoder.get().audioExit = true;
+                        if(encoder.get().videoExit){
+                            Log.e("base media encoder","audio thread exit");
+                            mediaMuxer.stop();
+                            mediaMuxer.release();
+                            mediaMuxer = null;
                         }
-                        mediaCodec.releaseOutputBuffer(outputBufferIndex,false);
-                        outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo,0);
+                        break;
+                    }
+
+                    int outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo,0);
+
+                    if(outputBufferIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED){
+
+                        audioTrackIndex = mediaMuxer.addTrack(mediaCodec.getOutputFormat());
+                        if(encoder.get().videoThread.videoTrackIndex != -1){
+                            Log.e("base media encoder","audio thread start");
+                            mediaMuxer.start();
+                            encoder.get().encoderStart = true;
+                        }
+
+
+                    }else{
+
+                        while(outputBufferIndex >= 0 ){
+
+                            if(encoder.get().encoderStart){
+
+                                ByteBuffer outputBuffer = mediaCodec.getOutputBuffers()[outputBufferIndex];
+                                outputBuffer.position(bufferInfo.offset);
+                                outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
+
+                                //encode
+                                if(pts == 0){
+                                    pts = bufferInfo.presentationTimeUs;
+                                }
+
+                                bufferInfo.presentationTimeUs = bufferInfo.presentationTimeUs - pts;
+
+                                mediaMuxer.writeSampleData(audioTrackIndex,outputBuffer,bufferInfo);
+
+                            }
+                            mediaCodec.releaseOutputBuffer(outputBufferIndex,false);
+                            outputBufferIndex = mediaCodec.dequeueOutputBuffer(bufferInfo,0);
+                        }
+
                     }
 
                 }
 
 
+            }catch (Exception e){
+                e.printStackTrace();
             }
-
 
         }
 

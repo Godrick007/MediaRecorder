@@ -30,6 +30,12 @@ android {
         }
     }
 
+//    sourceSets {
+//        main {
+//            jniLibs.srcDirs = ["../mediarecorder/src/main/jniLibs"]
+//        }
+//    }
+
 }
 
 dependencies {

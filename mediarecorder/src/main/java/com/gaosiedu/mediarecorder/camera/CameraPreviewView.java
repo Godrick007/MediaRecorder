@@ -1,6 +1,7 @@
 package com.gaosiedu.mediarecorder.camera;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.hardware.Camera;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -8,7 +9,9 @@ import android.view.Surface;
 import android.view.WindowManager;
 
 import com.gaosiedu.mediarecorder.egl.EGLSurfaceView;
+import com.gaosiedu.mediarecorder.render.BaseEGLRender;
 import com.gaosiedu.mediarecorder.render.CameraFBORender;
+import com.gaosiedu.mediarecorder.shader.PROGRAM;
 
 public class CameraPreviewView extends EGLSurfaceView {
 
@@ -46,6 +49,8 @@ public class CameraPreviewView extends EGLSurfaceView {
 
         setRender(fboRender);
         setRenderMode(RenderMode.RENDER_MODE_CONTINUOUSLY);
+
+
     }
 
     public void onDestory(){
@@ -130,6 +135,18 @@ public class CameraPreviewView extends EGLSurfaceView {
 
     public int getTextureId(){
         return textureId;
+    }
+
+    public BaseEGLRender getPreviewRender(){
+        return fboRender.getPreviewRender();
+    }
+
+    public void setStickers(Bitmap b1,Bitmap b2){
+        fboRender.setStickers(b1,b2);
+    }
+
+    public void setFragmentShader(PROGRAM p){
+        fboRender.setFragmentShader(p);
     }
 
 }
