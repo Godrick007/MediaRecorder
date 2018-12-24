@@ -63,8 +63,9 @@ public class CCamera {
             camera.startPreview();
 
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
+            stopPreview();
         }
 
     }

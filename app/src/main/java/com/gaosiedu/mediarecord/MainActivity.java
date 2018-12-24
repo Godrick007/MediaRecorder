@@ -90,6 +90,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void stop() {
 
+        if(cameraPreviewView != null){
+            cameraPreviewView.onDestory();
+        }
+
         if(audioRecord != null){
             audioRecord.stopRecord();
         }
@@ -102,6 +106,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void start() {
+
+//        if(true){
+//            cameraPreviewView.onDestory();
+//            return;
+//        }
+
+
+//        if(true){
+//            cameraPreviewView.switchCamera(0);
+//            cameraPreviewView.previewAngle(this);
+//            return;
+//        }
+
+
+        if(true){
+            cameraPreviewView.setFragmentShader(PROGRAM.ILLUSION);
+            return;
+        }
 
         audioRecord.startRecord();
 

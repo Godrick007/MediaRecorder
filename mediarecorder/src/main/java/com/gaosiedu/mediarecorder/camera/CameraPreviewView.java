@@ -18,12 +18,17 @@ public class CameraPreviewView extends EGLSurfaceView {
     private CameraFBORender fboRender;
     private CCamera camera;
 
-    private int cameraId = 0;
+    private int cameraId = 1;
 
     private int textureId;
 
-    public CameraPreviewView(Context context) {
+    private int width;
+    private int height;
+
+    public CameraPreviewView(Context context,int width,int height) {
         this(context,null);
+        this.width = width;
+        this.height = height;
     }
 
     public CameraPreviewView(Context context, AttributeSet attrs) {
@@ -37,7 +42,7 @@ public class CameraPreviewView extends EGLSurfaceView {
 
     private void init(Context context) {
 
-        fboRender = new CameraFBORender(context);
+        fboRender = new CameraFBORender(context,width,height);
         camera = new CCamera(context);
 
         previewAngle(context);
@@ -90,7 +95,6 @@ public class CameraPreviewView extends EGLSurfaceView {
                 Log.e("camera","90");
 
                 if(cameraId == Camera.CameraInfo.CAMERA_FACING_BACK){
-//                    fboRender.setAngle(90,0,0,1);
                     fboRender.setAngle(180,1,0,0);
                 }else if(cameraId == Camera.CameraInfo.CAMERA_FACING_FRONT){
                     fboRender.setAngle(180,0,0,1);
@@ -147,6 +151,11 @@ public class CameraPreviewView extends EGLSurfaceView {
 
     public void setFragmentShader(PROGRAM p){
         fboRender.setFragmentShader(p);
+    }
+
+    public void switchCamera(int cameraId){
+        this.cameraId = cameraId;
+        camera.switchCamera(cameraId);
     }
 
 }

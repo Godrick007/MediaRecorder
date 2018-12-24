@@ -27,12 +27,14 @@ public class CameraUtil {
             if(screenHeight == size.height){
 
                 if(size.height / size.width == 9 / 16){
+                    camera.release();
                     return size;
                 }
 
             }else{
 
                 if(size.height / size.width ==  9 / 16){
+                    camera.release();
                     return size;
                 }
 

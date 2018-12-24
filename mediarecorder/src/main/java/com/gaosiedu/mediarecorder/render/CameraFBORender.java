@@ -81,7 +81,10 @@ public class CameraFBORender extends BaseEGLRender implements SurfaceTexture.OnF
     private int width;
     private int height;
 
-    public CameraFBORender(Context context) {
+    public CameraFBORender(Context context,int width,int height) {
+
+        this.width = width;
+        this.height = height;
 
         this.context = context;
         vertexBuffer = ByteBuffer.allocateDirect(vertex_data.length * 4)
@@ -164,8 +167,8 @@ public class CameraFBORender extends BaseEGLRender implements SurfaceTexture.OnF
                 GLES20.GL_TEXTURE_2D,
                 0,
                 GLES20.GL_RGBA,
-                1920,
-                1080,
+                width,
+                height,
                 0,
                 GLES20.GL_RGBA,
                 GLES20.GL_UNSIGNED_BYTE,
