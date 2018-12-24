@@ -3,12 +3,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:id="@+id/fl_content"
     >
 
-    <com.gaosiedu.mediarecorder.camera.CameraPreviewView
-        android:id="@+id/camera_preview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+
+
 
     <Button
         android:text="start"

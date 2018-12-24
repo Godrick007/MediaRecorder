@@ -224,8 +224,8 @@ public class CameraFBORender extends BaseEGLRender implements SurfaceTexture.OnF
 
 
     public void onChange(int width, int height) {
-        this.width = 1920;
-        this.height = 1080;
+        this.width = width;
+        this.height = height;
     }
 
     @Override

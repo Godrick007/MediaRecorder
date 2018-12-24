@@ -11,6 +11,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.gaosiedu.mediarecorder.audio.AudioRecord;
@@ -31,6 +32,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     AudioRecord audioRecord;
 
     private MediaEncode mediaEncode;
+
+    int id = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,8 +56,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
 
+        RelativeLayout rlContent = findViewById(R.id.fl_content);
 
-        cameraPreviewView = findViewById(R.id.camera_preview);
+
+
+        cameraPreviewView = new CameraPreviewView(this,size.width,size.height);
+
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size.width,size.height);
+        params.addRule(RelativeLayout.CENTER_IN_PARENT);
+        cameraPreviewView.setLayoutParams(params);
+        rlContent.addView(cameraPreviewView);
+
 
         btnStart = findViewById(R.id.btn_start);
         btnStop = findViewById(R.id.btn_stop);
@@ -113,17 +125,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        }
 
 
-//        if(true){
-//            cameraPreviewView.switchCamera(0);
-//            cameraPreviewView.previewAngle(this);
-//            return;
-//        }
-
-
         if(true){
-            cameraPreviewView.setFragmentShader(PROGRAM.ILLUSION);
+            id = id == 0? 1 : 0;
+            cameraPreviewView.switchCamera(id);
+            cameraPreviewView.previewAngle(this);
             return;
         }
+
+
+//        if(true){
+//            cameraPreviewView.setFragmentShader(PROGRAM.REFRESH);
+//            return;
+//        }
 
         audioRecord.startRecord();
 

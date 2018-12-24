@@ -3,6 +3,7 @@ package com.gaosiedu.mediarecorder.camera;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.hardware.Camera;
+import android.opengl.GLES20;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Surface;
@@ -13,12 +14,14 @@ import com.gaosiedu.mediarecorder.render.BaseEGLRender;
 import com.gaosiedu.mediarecorder.render.CameraFBORender;
 import com.gaosiedu.mediarecorder.shader.PROGRAM;
 
+import javax.microedition.khronos.opengles.GL;
+
 public class CameraPreviewView extends EGLSurfaceView {
 
     private CameraFBORender fboRender;
     private CCamera camera;
 
-    private int cameraId = 1;
+    private int cameraId = 0;
 
     private int textureId;
 
@@ -26,21 +29,24 @@ public class CameraPreviewView extends EGLSurfaceView {
     private int height;
 
     public CameraPreviewView(Context context,int width,int height) {
-        this(context,null);
+        this(context,null,width,height);
+
+    }
+
+    public CameraPreviewView(Context context, AttributeSet attrs,int width,int height) {
+        this(context, attrs,0,width,height);
+    }
+
+    public CameraPreviewView(Context context, AttributeSet attrs, int defStyleAttr,int width,int height) {
+        super(context, attrs, defStyleAttr);
+        init(context,width,height);
+    }
+
+    private void init(Context context,int width,int height) {
+
         this.width = width;
         this.height = height;
-    }
 
-    public CameraPreviewView(Context context, AttributeSet attrs) {
-        this(context, attrs,0);
-    }
-
-    public CameraPreviewView(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init(context);
-    }
-
-    private void init(Context context) {
 
         fboRender = new CameraFBORender(context,width,height);
         camera = new CCamera(context);
