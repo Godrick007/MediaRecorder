@@ -49,6 +49,9 @@ public class EncodeRender extends BaseEGLRender {
     private int program;
     private int avPosition;
     private int afPosition;
+    private int u_matrix;
+    private float[] matrix = ImageTextureUtil.getOriginMatrix();
+
 
     private int VBOId;
 
@@ -105,7 +108,7 @@ public class EncodeRender extends BaseEGLRender {
 
         avPosition = GLES20.glGetAttribLocation(program, "v_Position");
         afPosition = GLES20.glGetAttribLocation(program, "f_Position");
-//        u_matrix = GLES20.glGetUniformLocation(PROGRAM,"u_Matrix");
+        u_matrix = GLES20.glGetUniformLocation(program,"u_Matrix");
 
         int[] vbos = new int[1];
         GLES20.glGenBuffers(1,vbos,0);
@@ -159,6 +162,8 @@ public class EncodeRender extends BaseEGLRender {
         GLES20.glClearColor(0.0f, 0f, 0f, 1f);
 
         GLES20.glUseProgram(program);
+
+        GLES20.glUniformMatrix4fv(u_matrix,1,false, matrix,0);
 
         //fbo
         GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,textureId);
@@ -267,13 +272,19 @@ public class EncodeRender extends BaseEGLRender {
 
     public void addSticker1(Bitmap sticker) {
 
-        float scale = height * 1.0f / 720;
+        if(sticker == null){
+            sticker1TextureId = -1;
+            changeSticker1 = false;
+            return;
+        }
+
+        float scale = sticker.getHeight() * 1.0f / height;
 
         float imageHeight = scale * sticker.getHeight();
         float imageWidth = scale * sticker.getWidth();
 
-        float sh = imageHeight/ height;
-        float sw = imageWidth / width;
+        float sh = imageHeight / height * 2;
+        float sw = imageWidth / width * 2;
 
 
 
@@ -289,18 +300,6 @@ public class EncodeRender extends BaseEGLRender {
         vertex_data[14] = -1f + sw;
         vertex_data[15] = -1f + sh;
 
-//        vertex_data[8] = -1f;
-//        vertex_data[9] = -1f;
-//
-//        vertex_data[10] = -1f;
-//        vertex_data[11] = -1f;
-//
-//        vertex_data[12] = -1f;
-//        vertex_data[13] = -1f;
-//
-//        vertex_data[14] = -1f;
-//        vertex_data[15] = -1f;
-
         this.sticker1 = sticker;
         this.changeSticker1 = true;
     }
@@ -309,11 +308,17 @@ public class EncodeRender extends BaseEGLRender {
 
         //第二张，草原
 
+        if(sticker == null){
+            sticker2TextureId = -1;
+            changeSticker2 = false;
+            return;
+        }
+
         float scale = height * 1.0f / 720;
 
         float imgWidth = sticker.getWidth() * scale;
 
-        float r = imgWidth /  width;
+        float r = imgWidth /  width / 2;
 
         if (r > 1) {
 
@@ -350,5 +355,7 @@ public class EncodeRender extends BaseEGLRender {
     }
 
 
-
+    public void setFBOId(int id){
+        this.textureId = id;
+    }
 }

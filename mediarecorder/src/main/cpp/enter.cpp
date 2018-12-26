@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <string>
+#include "androidLog.h"
 
 
 #include "CallBack2Java.h"
@@ -25,6 +26,8 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
         return result;
     }
 
+    LOGE("audio recorder","jvm onLoad");
+
     return JNI_VERSION_1_4;
 
 }
@@ -32,6 +35,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
 
 void *startRecord(void *data)
 {
+    LOGE("audio recorder","start thread");
     audio->startMICRecord();
     return 0;
 }
@@ -40,6 +44,8 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_gaosiedu_mediarecorder_audio_AudioRecord_native_1start_1record(JNIEnv *env,
                                                                         jobject instance) {
+
+    LOGE("audio recorder","start");
 
     if(!calljava)
     {
@@ -82,7 +88,5 @@ Java_com_gaosiedu_mediarecorder_audio_AudioRecord_native_1release(JNIEnv *env, j
         delete calljava;
         calljava = NULL;
     }
-
-    javaVm = NULL;
 
 }

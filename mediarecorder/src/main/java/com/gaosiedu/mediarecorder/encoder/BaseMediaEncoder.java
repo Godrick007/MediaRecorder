@@ -169,8 +169,8 @@ public abstract class BaseMediaEncoder {
             videoFormat = MediaFormat.createVideoFormat(mimeType,width,height);
             videoFormat.setInteger(MediaFormat.KEY_COLOR_FORMAT,MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
             videoFormat.setInteger(MediaFormat.KEY_BIT_RATE,width * height * 4);
-            videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE,24); //max value
-            videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL,1); // key frame interval / second
+            videoFormat.setInteger(MediaFormat.KEY_FRAME_RATE,15); //max value
+            videoFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL,5); // key frame interval / second
 
 
             videoCodec = MediaCodec.createEncoderByType(mimeType);

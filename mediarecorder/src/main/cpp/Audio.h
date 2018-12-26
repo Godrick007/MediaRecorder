@@ -11,6 +11,7 @@
 #include <pthread.h>
 #include "CallBack2Java.h"
 #include "RecordBuffer.h"
+#include "androidLog.h"
 
 
 #define RECORD_BUFFER_SIZE 4096 * 2

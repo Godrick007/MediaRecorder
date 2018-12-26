@@ -9,7 +9,7 @@ import com.gaosiedu.mediarecorder.render.EncodeRender;
 
 public class MediaEncode extends BaseMediaEncoder {
 
-    private BaseEGLRender encodeRender;
+    private EncodeRender encodeRender;
 
 
     public MediaEncode(Context context, int textureId) {
@@ -25,5 +25,8 @@ public class MediaEncode extends BaseMediaEncoder {
         ((EncodeRender)encodeRender).addSticker2(b2);
     }
 
+    public void setFBOTextureId(int textureId){
+        encodeRender.setFBOId(textureId);
+    }
 
 }

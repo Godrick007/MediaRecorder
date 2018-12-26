@@ -4,8 +4,10 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.opengl.GLES20;
+import android.opengl.Matrix;
 
 import com.gaosiedu.mediarecorder.R;
+import com.gaosiedu.mediarecorder.listener.OnTakePhotoListener;
 import com.gaosiedu.mediarecorder.util.DisplayUtil;
 import com.gaosiedu.mediarecorder.util.ImageTextureUtil;
 import com.gaosiedu.mediarecorder.util.ShaderUtil;
@@ -14,6 +16,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 
+import javax.microedition.khronos.opengles.GL;
 
 
 public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture.OnFrameAvailableListener {
@@ -54,6 +57,9 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
     private int program;
     private int avPosition;
     private int afPosition;
+    private int u_matrix;
+    private static final float[] matrix = ImageTextureUtil.getOriginMatrix();
+    private static float[] rotateMatrix = ImageTextureUtil.getOriginMatrix();
 
     private int color;
 
@@ -63,7 +69,6 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
 
     private boolean changeSticker1 = false;
     private boolean changeSticker2 = false;
-
 
 
     private Bitmap sticker1;
@@ -77,6 +82,10 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
 
 
     private FloatBuffer colorBuffer;
+
+    private boolean isTakePhoto = false;
+
+    private OnTakePhotoListener onTakePhotoListener;
 
 
     public CameraPreviewRender(Context context) {
@@ -101,13 +110,11 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
     }
 
 
-
-
     @Override
     protected void onCreated() {
 
         GLES20.glEnable(GLES20.GL_BLEND);
-        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA,GLES20.GL_ONE_MINUS_SRC_ALPHA);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
 
         String vertexSource = ShaderUtil.readRawText(context, R.raw.vertex2);
         String textureSource = ShaderUtil.readRawText(context, R.raw.fragment_preview);
@@ -117,13 +124,15 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
         avPosition = GLES20.glGetAttribLocation(program, "v_Position");
         afPosition = GLES20.glGetAttribLocation(program, "f_Position");
 
+        u_matrix = GLES20.glGetUniformLocation(program, "u_Matrix");
+
         bindVBO();
 
     }
 
     @Override
     protected void onChange(int width, int height) {
-        GLES20.glViewport(0,0,width,height);
+        GLES20.glViewport(0, 0, width, height);
         this.width = width;
         this.height = height;
     }
@@ -138,19 +147,19 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
 
     }
 
-    void onDrawFrame(int FBOTextureId){
+    void onDrawFrame(int FBOTextureId) {
 
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClearColor(1.0f, 0f, 0f, 1f);
 
 
-
-
         GLES20.glUseProgram(program);
 
+        GLES20.glUniformMatrix4fv(u_matrix, 1, false, matrix, 0);
+
         //fbo
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,FBOTextureId);
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER,VBOId);
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, FBOTextureId);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, VBOId);
         GLES20.glEnableVertexAttribArray(avPosition);
         GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8, 0);
         GLES20.glEnableVertexAttribArray(afPosition);
@@ -160,7 +169,7 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
 
         //stickers
 
-        if(changeSticker1){
+        if (changeSticker1) {
             changeSticker1 = false;
             sticker1TextureId = ImageTextureUtil.loadBitmapTexture2D(sticker1);
 
@@ -170,7 +179,7 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
         }
 
 
-        if(changeSticker2){
+        if (changeSticker2) {
             changeSticker2 = false;
             sticker2TextureId = ImageTextureUtil.loadBitmapTexture2D(sticker2);
 
@@ -178,10 +187,10 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
 
         }
 
-        if(sticker1TextureId != -1) {
+        if (sticker1TextureId != -1) {
             //sticker1
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, sticker1TextureId);
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER,VBOId);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, VBOId);
             GLES20.glEnableVertexAttribArray(avPosition);
             GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8, 32);
             GLES20.glEnableVertexAttribArray(afPosition);
@@ -190,26 +199,98 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
         }
 
-        if(sticker2TextureId != -1){
+        if (sticker2TextureId != -1) {
             //sticker2
             GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, sticker2TextureId);
-            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER,VBOId);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, VBOId);
             GLES20.glEnableVertexAttribArray(avPosition);
             GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8, 32 * 2);
             GLES20.glEnableVertexAttribArray(afPosition);
             GLES20.glVertexAttribPointer(afPosition, 2, GLES20.GL_FLOAT, false, 8, vertex_data.length * 4);
             GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
-            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,0);
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
         }
 
-        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D,0);
+        if (isTakePhoto) {
+            isTakePhoto = false;
+            GLES20.glUniformMatrix4fv(u_matrix, 1, false, rotateMatrix, 0);
+
+            //fbo
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, FBOTextureId);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, VBOId);
+            GLES20.glEnableVertexAttribArray(avPosition);
+            GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8, 0);
+            GLES20.glEnableVertexAttribArray(afPosition);
+            GLES20.glVertexAttribPointer(afPosition, 2, GLES20.GL_FLOAT, false, 8, vertex_data.length * 4);
+            GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+
+
+            //stickers
+
+            if (changeSticker1) {
+                changeSticker1 = false;
+                sticker1TextureId = ImageTextureUtil.loadBitmapTexture2D(sticker1);
+
+                bindVBO();
+
+
+            }
+
+
+            if (changeSticker2) {
+                changeSticker2 = false;
+                sticker2TextureId = ImageTextureUtil.loadBitmapTexture2D(sticker2);
+
+                bindVBO();
+
+            }
+
+            if (sticker1TextureId != -1) {
+                //sticker1
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, sticker1TextureId);
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, VBOId);
+                GLES20.glEnableVertexAttribArray(avPosition);
+                GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8, 32);
+                GLES20.glEnableVertexAttribArray(afPosition);
+                GLES20.glVertexAttribPointer(afPosition, 2, GLES20.GL_FLOAT, false, 8, vertex_data.length * 4);
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+            }
+
+            if (sticker2TextureId != -1) {
+                //sticker2
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, sticker2TextureId);
+                GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, VBOId);
+                GLES20.glEnableVertexAttribArray(avPosition);
+                GLES20.glVertexAttribPointer(avPosition, 2, GLES20.GL_FLOAT, false, 8, 32 * 2);
+                GLES20.glEnableVertexAttribArray(afPosition);
+                GLES20.glVertexAttribPointer(afPosition, 2, GLES20.GL_FLOAT, false, 8, vertex_data.length * 4);
+                GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4);
+                GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+            }
+
+
+            ByteBuffer buffer = ByteBuffer.allocate(width * height * 4);
+            GLES20.glReadPixels(0, 0, width, height, GLES20.GL_RGBA, GLES20.GL_UNSIGNED_BYTE, buffer);
+            if (onTakePhotoListener != null) {
+                onTakePhotoListener.onTake(buffer.array());
+            }
+
+
+
+            GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
+            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
+
+        }
+
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
         GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
 
     }
 
     private void bindVBO() {
 
-        if(VBOId != 0) {
+        if (VBOId != 0) {
 //            GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER,VBOId);
 //            GLES20.glDeleteBuffers(GLES20.GL_ARRAY_BUFFER,new int[]{VBOId},0);
 
@@ -222,10 +303,10 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
         }
 
         int[] vbos = new int[1];
-        GLES20.glGenBuffers(1,vbos,0);
+        GLES20.glGenBuffers(1, vbos, 0);
         VBOId = vbos[0];
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER,VBOId);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, VBOId);
 
         GLES20.glBufferData(
                 GLES20.GL_ARRAY_BUFFER,
@@ -248,20 +329,25 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
                 textureBuffer
         );
 
-        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER,0);
+        GLES20.glBindBuffer(GLES20.GL_ARRAY_BUFFER, 0);
     }
 
 
     public void addSticker1(Bitmap sticker) {
 
-        float scale = height * 1.0f / 720;
+        if (sticker == null) {
+            sticker1TextureId = -1;
+            changeSticker1 = false;
+            return;
+        }
+
+        float scale = sticker.getHeight() * 1.0f / height;
 
         float imageHeight = scale * sticker.getHeight();
         float imageWidth = scale * sticker.getWidth();
 
-        float sh = imageHeight/ height;
-        float sw = imageWidth / width;
-
+        float sh = imageHeight / height * 2;
+        float sw = imageWidth / width * 2;
 
 
         vertex_data[8] = -1f;
@@ -285,11 +371,17 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
 
         //第二张，草原
 
+        if (sticker == null) {
+            sticker2TextureId = -1;
+            changeSticker2 = false;
+            return;
+        }
+
         float scale = height * 1.0f / 720;
 
         float imgWidth = sticker.getWidth() * scale;
 
-        float r = imgWidth /  width;
+        float r = imgWidth / width / 2;
 
         if (r > 1) {
 
@@ -326,7 +418,26 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
     }
 
 
+    public void setOnTakePhotoListener(OnTakePhotoListener onTakePhotoListener) {
+        this.onTakePhotoListener = onTakePhotoListener;
+    }
 
+    public void takePhoto(int cameraId) {
+
+        Matrix.setIdentityM(rotateMatrix,0);
+
+        if (cameraId == 0) {
+            setRotateMatrix(180,1,0,0);
+        }else{
+            setRotateMatrix(180,0,0,1);
+            setRotateMatrix(180,0,1,0);
+        }
+        isTakePhoto = true;
+    }
+
+    private void setRotateMatrix(float angle, float x, float y, float z) {
+        Matrix.rotateM(rotateMatrix, 0, angle, x, y, z);
+    }
 
 
 }

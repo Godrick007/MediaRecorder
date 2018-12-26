@@ -6,6 +6,7 @@
 #include "Audio.h"
 
 Audio::Audio(CallBack2Java *callJava) {
+    this->isExit = false;
     this->callJava = callJava;
     this->recordBuffer = new RecordBuffer(RECORD_BUFFER_SIZE);
 }
@@ -15,6 +16,7 @@ Audio::~Audio() {
     slObject = NULL;
     slEngine = NULL;
     recorder = NULL;
+    (*recordObject)->Destroy(recordObject);
     recordObject = NULL;
     recordBufferQueue = NULL;
 
@@ -38,9 +40,11 @@ void Audio::startMICRecord() {
 
     if(!isExit)
     {
+        LOGE("audio recorder","startMic");
         this->isRecording = true;
         pthread_create(&thread_record,NULL,recordThread,this);
     }
+
 
 }
 
@@ -51,6 +55,8 @@ void Audio::stopMICRecord() {
 
 void recordBufferCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 {
+    LOGE("audio recorder","recordBufferCallback");
+
     Audio *audio = static_cast<Audio *>(context);
 
     if(audio->isRecording)
@@ -59,6 +65,9 @@ void recordBufferCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
         {
             if(audio->callJava)
             {
+
+                LOGE("audio recorder","record callback to java at cpp");
+
                 audio->callJava->callback2JavaPCMDataCallback(
                         audio->recordBuffer->getCacheBuffer(),
 
@@ -97,13 +106,27 @@ void recordBufferCallback(SLAndroidSimpleBufferQueueItf bq, void *context)
 
 void Audio::initRecord() {
 
+    LOGE("audio recorder","initRecord");
+
     SLresult result;
 
-    slCreateEngine(&this->slObject,0,NULL,0,NULL,NULL);
+    result = slCreateEngine(&this->slObject,0,NULL,0,NULL,NULL);
 
-    (*slObject)->Realize(slObject,SL_BOOLEAN_FALSE);
+    LOGE("audio recorder","result slCreateEngine %d",result);
 
-    (*slObject)->GetInterface(slObject,SL_IID_ENGINE,&this->slEngine);
+    (void)result;
+
+    result = (*slObject)->Realize(slObject,SL_BOOLEAN_FALSE);
+
+    LOGE("audio recorder","result obj Realize %d",result);
+
+    (void)result;
+
+    result = (*slObject)->GetInterface(slObject,SL_IID_ENGINE,&this->slEngine);
+
+    LOGE("audio recorder","result obj GetInterface %d",result);
+
+    (void)result;
 
     SLDataLocator_IODevice loc_dev = {
             SL_DATALOCATOR_IODEVICE,
@@ -139,7 +162,7 @@ void Audio::initRecord() {
     SLboolean req[1] = {SL_BOOLEAN_TRUE};
 
 
-    (*slEngine)->CreateAudioRecorder(
+    result = (*slEngine)->CreateAudioRecorder(
             slEngine,
             &this->recordObject,
             &audioSource,
@@ -149,24 +172,52 @@ void Audio::initRecord() {
             req
             );
 
-    (*recordObject)->Realize(recordObject,SL_BOOLEAN_FALSE);
+    LOGE("audio recorder","result obj CreateAudioRecorder %d",result);
 
-    (*recordObject)->GetInterface(
+    (void)result;
+
+    result = (*recordObject)->Realize(recordObject,SL_BOOLEAN_FALSE);
+
+    LOGE("audio recorder","result record Realize %d",result);
+
+    (void)result;
+
+    result = (*recordObject)->GetInterface(
             recordObject,
             SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
             &this->recordBufferQueue
     );
 
-    (*recordBufferQueue)->Enqueue(
+    LOGE("audio recorder","result record GetInterface %d",result);
+
+    (void)result;
+
+    result = (*recordBufferQueue)->Enqueue(
             recordBufferQueue,
             this->recordBuffer->getRecordBuffer(),
             RECORD_BUFFER_SIZE
             );
 
-    (*recordBufferQueue)->RegisterCallback(recordBufferQueue,recordBufferCallback,this);
+    LOGE("audio recorder","result record Enqueue %d",result);
 
-    (*recordObject)->GetInterface(recordObject,SL_IID_RECORD,&this->recorder);
+    (void)result;
 
-    (*recorder)->SetRecordState(recorder,SL_RECORDSTATE_RECORDING);
+    result = (*recordBufferQueue)->RegisterCallback(recordBufferQueue,recordBufferCallback,this);
+
+    LOGE("audio recorder","result record RegisterCallback %d",result);
+
+    (void)result;
+
+    result = (*recordObject)->GetInterface(recordObject,SL_IID_RECORD,&this->recorder);
+
+    LOGE("audio recorder","result record GetInterface %d",result);
+
+    (void)result;
+
+    result = (*recorder)->SetRecordState(recorder,SL_RECORDSTATE_RECORDING);
+
+    LOGE("audio recorder","result record SetRecordState %d",result);
+
+    (void)result;
 
 }

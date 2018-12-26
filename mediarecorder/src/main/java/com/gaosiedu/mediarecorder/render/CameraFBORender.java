@@ -9,7 +9,9 @@ import android.opengl.Matrix;
 import android.util.Log;
 
 import com.gaosiedu.mediarecorder.R;
+import com.gaosiedu.mediarecorder.listener.OnFBOTextureIdChangedListener;
 import com.gaosiedu.mediarecorder.listener.OnSurfaceCreatedListener;
+import com.gaosiedu.mediarecorder.listener.OnTakePhotoListener;
 import com.gaosiedu.mediarecorder.shader.PROGRAM;
 import com.gaosiedu.mediarecorder.util.ShaderUtil;
 
@@ -74,12 +76,16 @@ public class CameraFBORender extends BaseEGLRender implements SurfaceTexture.OnF
     private Context context;
 
     private OnSurfaceCreatedListener onSurfaceCreatedListener;
+    private OnFBOTextureIdChangedListener onFBOTextureIdChangedListener;
 
     private CameraPreviewRender previewRender;
 
+    private boolean fboChanged = false;
 
     private int width;
     private int height;
+
+    private OnTakePhotoListener onTakePhotoListener;
 
     public CameraFBORender(Context context,int width,int height) {
 
@@ -100,6 +106,12 @@ public class CameraFBORender extends BaseEGLRender implements SurfaceTexture.OnF
         textureBuffer.position(0);
 
         previewRender = new CameraPreviewRender(context);
+
+        previewRender.setOnTakePhotoListener(buffer -> {
+            if(onTakePhotoListener != null){
+                onTakePhotoListener.onTake(buffer);
+            }
+        });
 
     }
 
@@ -268,6 +280,10 @@ public class CameraFBORender extends BaseEGLRender implements SurfaceTexture.OnF
     }
 
 
+    public int getFboTextureId(){
+        return fboTextureId;
+    }
+
     public void setSize(int width, int height) {
         this.width = width;
         this.height = height;
@@ -286,14 +302,13 @@ public class CameraFBORender extends BaseEGLRender implements SurfaceTexture.OnF
         this.onSurfaceCreatedListener = onSurfaceCreatedListener;
     }
 
+    public void setOnFBOTextureIdChangedListener(OnFBOTextureIdChangedListener onFBOTextureIdChangedListener) {
+        this.onFBOTextureIdChangedListener = onFBOTextureIdChangedListener;
+    }
 
     public void setStickers(Bitmap b1, Bitmap b2) {
-        if (b1 != null) {
             previewRender.addSticker1(b1);
-        }
-        if (b2 != null) {
             previewRender.addSticker2(b2);
-        }
     }
 
     public BaseEGLRender getPreviewRender() {
@@ -324,8 +339,10 @@ public class CameraFBORender extends BaseEGLRender implements SurfaceTexture.OnF
             default:
                 program_current = program_normal;
                 break;
-
         }
+
+        fboChanged = true;
+
     }
 
 
@@ -352,5 +369,15 @@ public class CameraFBORender extends BaseEGLRender implements SurfaceTexture.OnF
         program_charming = ShaderUtil.createProgram(vertexSource, charming);
     }
 
+
+    public void setOnTakePhotoListener(OnTakePhotoListener onTakePhotoListener) {
+        this.onTakePhotoListener = onTakePhotoListener;
+    }
+
+    public void takePhoto(int cameraId){
+        if(previewRender != null){
+            previewRender.takePhoto(cameraId);
+        }
+    }
 
 }

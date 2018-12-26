@@ -72,4 +72,13 @@ public class ImageTextureUtil {
         return textureIds[0];
     }
 
+    public static float[] getOriginMatrix(){
+        return new float[]{
+                1,0,0,0,
+                0,1,0,0,
+                0,0,1,0,
+                0,0,0,1,
+        };
+    }
+
 }
