@@ -72,11 +72,14 @@ public class EncodeRender extends BaseEGLRender {
     private int width;
     private int height;
 
-    public EncodeRender(Context context, int textureId) {
+    public EncodeRender(Context context, int textureId,int width,int height) {
 
         this.context = context;
         this.textureId = textureId;
         this.context = context;
+        this.width = width;
+        this.height = height;
+
         vertexBuffer = ByteBuffer.allocateDirect(vertex_data.length * 4)
                 .order(ByteOrder.nativeOrder())
                 .asFloatBuffer()
@@ -89,8 +92,8 @@ public class EncodeRender extends BaseEGLRender {
                 .put(texture_data);
         textureBuffer.position(0);
 
-        width = DisplayUtil.getScreenWidth(context);
-        height = DisplayUtil.getScreenHeight(context);
+//        width = DisplayUtil.getScreenWidth(context);
+//        height = DisplayUtil.getScreenHeight(context);
 
     }
 

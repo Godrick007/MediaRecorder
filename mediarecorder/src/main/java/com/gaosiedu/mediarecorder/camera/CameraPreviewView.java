@@ -3,11 +3,14 @@ package com.gaosiedu.mediarecorder.camera;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.WindowManager;
+import android.widget.ImageView;
 
 import com.gaosiedu.mediarecorder.egl.EGLSurfaceView;
 import com.gaosiedu.mediarecorder.listener.OnFBOTextureIdChangedListener;
@@ -16,11 +19,14 @@ import com.gaosiedu.mediarecorder.render.CameraFBORender;
 import com.gaosiedu.mediarecorder.shader.PROGRAM;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CameraPreviewView extends EGLSurfaceView {
 
     private CameraFBORender fboRender;
     private CCamera camera;
+
 
     private int cameraId = 0;
 
@@ -28,6 +34,7 @@ public class CameraPreviewView extends EGLSurfaceView {
 
     private int width;
     private int height;
+
 
     private OnTakePhotoListener onTakePhotoListener;
 
@@ -203,6 +210,41 @@ public class CameraPreviewView extends EGLSurfaceView {
     }
 
 
+    private boolean isNeedFocus=true; //是否需要聚焦
+    final long FLAG_MAX_DURATION=1000;
+    final long FLAG_MAX_SPACE=50;
+    long downTime=0;
+    float startX;
+    float startY;
+    private int focusX;     //聚焦的x坐标
+    private int focusY;     //聚焦的y坐标
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (!isNeedFocus){
+            return super.onTouchEvent(event);
+        }
+        switch (event.getAction()){
+            case MotionEvent.ACTION_DOWN:
+                downTime=System.currentTimeMillis();
+                startX=event.getX();
+                startY=event.getY();
+                break;
+            case MotionEvent.ACTION_UP:
+                long duration=System.currentTimeMillis()-downTime;
+                float space=Math.max(Math.abs(event.getX()-startX),Math.abs(event.getY()-startY));
+//                Log.d("wys","[onTouchEvent]  duration:"+duration+"  space:"+space);
+                if (duration<FLAG_MAX_DURATION&&space<FLAG_MAX_SPACE){
+                    focusX = (int) event.getX();
+                    focusY = (int) event.getY();
+                    camera.newFocus(focusX,focusY);
+                }
+                break;
+        }
+        return true;
+
+    }
+
     public void setOnTakePhotoListener(OnTakePhotoListener onTakePhotoListener) {
         this.onTakePhotoListener = onTakePhotoListener;
     }
@@ -210,4 +252,10 @@ public class CameraPreviewView extends EGLSurfaceView {
     public interface OnTakePhotoListener{
         void onTake(Bitmap bitmap);
     }
+
+    public void setFocusListener(CCamera.IFocusListener listener){
+        camera.setFocusListener(listener);
+    }
+
+
 }

@@ -9,25 +9,25 @@ void main(){
     colorMatrix[1] = 0.3;
     colorMatrix[2] = 0.1;
     colorMatrix[3] = 0.0;
-    colorMatrix[4] = 0.1824;
+    colorMatrix[4] = 46.5 / 255.0;
 
 
     colorMatrix[5] = 0.1;
     colorMatrix[6] = 0.9;
     colorMatrix[7] = 0.0;
     colorMatrix[8] = 0.0;
-    colorMatrix[9] = 0.1824;
+    colorMatrix[9] = 46.5 / 255.0;
 
     colorMatrix[10] = 0.1;
     colorMatrix[11] = 0.3;
     colorMatrix[12] = 0.7;
     colorMatrix[13] = 0.0;
-    colorMatrix[14] = 0.1824;
+    colorMatrix[14] = 46.5 / 255.0;
 
     colorMatrix[15] = 0.0;
     colorMatrix[16] = 0.0;
     colorMatrix[17] = 0.0;
-    colorMatrix[18] = 0.1;
+    colorMatrix[18] = 1.0;
     colorMatrix[19] = 0.0;
 
 

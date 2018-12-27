@@ -1,8 +1,11 @@
 package com.gaosiedu.mediarecord;
 
 import android.Manifest;
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.MediaFormat;
 import android.os.Environment;
@@ -11,13 +14,16 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 
 import com.gaosiedu.mediarecorder.audio.AudioRecord;
+import com.gaosiedu.mediarecorder.camera.CCamera;
 import com.gaosiedu.mediarecorder.camera.CameraPreviewView;
 import com.gaosiedu.mediarecorder.encoder.MediaEncode;
 import com.gaosiedu.mediarecorder.shader.PROGRAM;
 import com.gaosiedu.mediarecorder.util.CameraUtil;
+import com.gaosiedu.mediarecorder.util.DisplayUtil;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
@@ -36,6 +42,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     int id = 0;
 
+    private ImageView ivFocus;
+
+
+    Camera.Size size;
+
+    int height;
+    int width;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -49,8 +63,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         requestPermissions(permissions, 100);
 
-        Camera.Size size = CameraUtil.getCameraSize(this);
 
+        size = CameraUtil.getCameraSize(this);
+
+        int screenHeight = DisplayUtil.getScreenHeight(this);
+
+        float scale = screenHeight * 1.0f / size.height;
+
+
+        height = (int) (scale * size.height);
+        width = (int) (scale * size.width) - 380;
 
 
         super.onCreate(savedInstanceState);
@@ -61,10 +83,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
 
-        cameraPreviewView = new CameraPreviewView(this,size.width,size.height);
+        cameraPreviewView = new CameraPreviewView(this,width,height);
 
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(size.width,size.height);
-        params.addRule(RelativeLayout.CENTER_IN_PARENT);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(width,height);
+//        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         cameraPreviewView.setLayoutParams(params);
         rlContent.addView(cameraPreviewView);
 
@@ -78,7 +100,24 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         cameraPreviewView.setOnTakePhotoListener(this::saveBitmap);
 
+        cameraPreviewView.setFocusListener(new CCamera.IFocusListener() {
+            @Override
+            public void onFocus(Rect rect) {
 
+                rlContent.removeView(ivFocus);
+                ivFocus=new ImageView(MainActivity.this);
+                RelativeLayout.LayoutParams params=new RelativeLayout.LayoutParams((int)getScaleSize(120),(int)getScaleSize(120));
+                params.leftMargin=rect.left;
+                params.topMargin=rect.top;
+                ivFocus.setLayoutParams(params);
+                ivFocus.setScaleType(ImageView.ScaleType.FIT_XY);
+                ivFocus.setImageResource(R.drawable.icon_focus_circle);
+                rlContent.addView(ivFocus);
+                startFocusAnim(ivFocus);
+
+
+            }
+        });
 
 
 
@@ -143,12 +182,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            return;
 //        }
 
+        if(true){
+
+            cameraPreviewView.setFragmentShader(PROGRAM.ILLUSION);
+
+            return;
+        }
+
 
         audioRecord = new AudioRecord();
 
         audioRecord.startRecord();
 
-        mediaEncode = new MediaEncode(this,cameraPreviewView.getTextureId());
+        mediaEncode = new MediaEncode(this,cameraPreviewView.getTextureId(),width,height);
 
         mediaEncode.initEncoder(
                 cameraPreviewView.getEglContext(),
@@ -194,5 +240,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     }
 
+
+    private void startFocusAnim(View view){
+        ObjectAnimator animScaleY = ObjectAnimator.ofFloat(view, "scaleY", 1f, 1.5f,1f);
+        animScaleY.setDuration(300);
+        ObjectAnimator animScaleX = ObjectAnimator.ofFloat(view, "scaleX", 1f, 1.5f,1f);
+        animScaleX.setDuration(300);
+        ObjectAnimator animAlpha = ObjectAnimator.ofFloat(view, "alpha", 1f, 0.5f,1f);
+        animAlpha.setDuration(300);
+        ObjectAnimator animAlpha2 = ObjectAnimator.ofFloat(view, "alpha", 1f, 0f);
+        animAlpha2.setDuration(2000);
+        AnimatorSet animatorSet = new AnimatorSet();
+        animatorSet.play(animScaleY).with(animAlpha).with(animScaleX);
+        animatorSet.play(animAlpha2).after(animAlpha);
+//        animatorSet.setDuration(300);
+        animatorSet.start();
+    }
+
+
+    public float getScaleSize(int px){
+
+        float scale = height * 1.0f / 720;
+
+        return px * scale;
+
+    }
 
 }

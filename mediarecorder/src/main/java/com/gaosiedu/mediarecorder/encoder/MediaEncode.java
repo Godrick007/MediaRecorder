@@ -12,9 +12,9 @@ public class MediaEncode extends BaseMediaEncoder {
     private EncodeRender encodeRender;
 
 
-    public MediaEncode(Context context, int textureId) {
+    public MediaEncode(Context context, int textureId,int width,int height) {
         super(context);
-        encodeRender = new EncodeRender(context,textureId);
+        encodeRender = new EncodeRender(context,textureId,width,height);
         setRender(encodeRender);
         setRenderMode(RenderMode.RENDER_MODE_CONTINUOUSLY);
     }

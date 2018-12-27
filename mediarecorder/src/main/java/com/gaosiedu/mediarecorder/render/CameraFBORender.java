@@ -105,7 +105,7 @@ public class CameraFBORender extends BaseEGLRender implements SurfaceTexture.OnF
                 .put(texture_data);
         textureBuffer.position(0);
 
-        previewRender = new CameraPreviewRender(context);
+        previewRender = new CameraPreviewRender(context,width,height);
 
         previewRender.setOnTakePhotoListener(buffer -> {
             if(onTakePhotoListener != null){

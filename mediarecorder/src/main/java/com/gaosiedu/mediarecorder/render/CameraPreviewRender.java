@@ -88,10 +88,11 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
     private OnTakePhotoListener onTakePhotoListener;
 
 
-    public CameraPreviewRender(Context context) {
+    public CameraPreviewRender(Context context,int width,int height) {
 
         this.context = context;
-
+        this.width = width;
+        this.height = height;
         vertexBuffer = ByteBuffer.allocateDirect(vertex_data.length * 4)
                 .order(ByteOrder.nativeOrder())
                 .asFloatBuffer()
@@ -104,8 +105,8 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
                 .put(texture_data);
         textureBuffer.position(0);
 
-        width = DisplayUtil.getScreenWidth(context);
-        height = DisplayUtil.getScreenHeight(context);
+//        width = DisplayUtil.getScreenWidth(context);
+//        height = DisplayUtil.getScreenHeight(context);
 
     }
 
@@ -343,8 +344,10 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
 
         float scale = sticker.getHeight() * 1.0f / height;
 
-        float imageHeight = scale * sticker.getHeight();
-        float imageWidth = scale * sticker.getWidth();
+//        float imageHeight = scale * sticker.getHeight();
+//        float imageWidth = scale * sticker.getWidth();
+        float imageHeight = sticker.getHeight() * 1.0f / scale;
+        float imageWidth = sticker.getWidth()  * 1.0f / scale;
 
         float sh = imageHeight / height * 2;
         float sw = imageWidth / width * 2;
@@ -379,7 +382,7 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
 
         float scale = height * 1.0f / 720;
 
-        float imgWidth = sticker.getWidth() * scale;
+        float imgWidth = sticker.getWidth() * 1.0f / scale;
 
         float r = imgWidth / width / 2;
 
