@@ -182,12 +182,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            return;
 //        }
 
-        if(true){
-
-            cameraPreviewView.setFragmentShader(PROGRAM.ILLUSION);
-
-            return;
-        }
+//        if(true){
+//
+//            cameraPreviewView.setFragmentShader(PROGRAM.ILLUSION);
+//
+//            return;
+//        }
 
 
         audioRecord = new AudioRecord();

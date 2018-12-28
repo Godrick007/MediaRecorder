@@ -384,7 +384,7 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
 
         float imgWidth = sticker.getWidth() * 1.0f / scale;
 
-        float r = imgWidth / width / 2;
+        float r = imgWidth /  width / 2;
 
         if (r > 1) {
 

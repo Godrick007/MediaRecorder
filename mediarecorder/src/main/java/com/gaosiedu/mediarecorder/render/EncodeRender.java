@@ -283,8 +283,10 @@ public class EncodeRender extends BaseEGLRender {
 
         float scale = sticker.getHeight() * 1.0f / height;
 
-        float imageHeight = scale * sticker.getHeight();
-        float imageWidth = scale * sticker.getWidth();
+//        float imageHeight = scale * sticker.getHeight();
+//        float imageWidth = scale * sticker.getWidth();
+        float imageHeight = sticker.getHeight() * 1.0f / scale;
+        float imageWidth = sticker.getWidth()  * 1.0f / scale;
 
         float sh = imageHeight / height * 2;
         float sw = imageWidth / width * 2;
@@ -319,7 +321,7 @@ public class EncodeRender extends BaseEGLRender {
 
         float scale = height * 1.0f / 720;
 
-        float imgWidth = sticker.getWidth() * scale;
+        float imgWidth = sticker.getWidth() * 1.0f / scale;
 
         float r = imgWidth /  width / 2;
 
