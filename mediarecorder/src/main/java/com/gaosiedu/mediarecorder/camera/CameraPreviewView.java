@@ -1,16 +1,18 @@
 package com.gaosiedu.mediarecorder.camera;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Matrix;
-import android.graphics.Rect;
 import android.hardware.Camera;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.WindowManager;
-import android.widget.ImageView;
 
 import com.gaosiedu.mediarecorder.egl.EGLSurfaceView;
 import com.gaosiedu.mediarecorder.listener.OnFBOTextureIdChangedListener;
@@ -19,8 +21,6 @@ import com.gaosiedu.mediarecorder.render.CameraFBORender;
 import com.gaosiedu.mediarecorder.shader.PROGRAM;
 
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.List;
 
 public class CameraPreviewView extends EGLSurfaceView {
 
@@ -78,7 +78,6 @@ public class CameraPreviewView extends EGLSurfaceView {
             camera.initCamera(surfaceTexture, cameraId);
             this.textureId = textureId;
         });
-
 
 
         setRender(fboRender);
@@ -187,33 +186,36 @@ public class CameraPreviewView extends EGLSurfaceView {
         this.onFBOTextureIdChangedListener = onFBOTextureIdChangedListener;
     }
 
-    public void takePhoto(){
+    public void takePhoto() {
         fboRender.takePhoto(cameraId);
     }
 
-    private void getBitmap(byte[] buffer){
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
+    private void getBitmap(byte[] buffer) {
+        new Thread(() -> {
 
-                Bitmap bitmap=Bitmap.createBitmap(width,height, Bitmap.Config.ARGB_8888);
-                ByteBuffer b=ByteBuffer.wrap(buffer);
-                bitmap.copyPixelsFromBuffer(b);
+            Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
 
-                if(onTakePhotoListener != null){
-                    onTakePhotoListener.onTake(bitmap);
-                }
 
+            ByteBuffer b = ByteBuffer.wrap(buffer);
+            bitmap.copyPixelsFromBuffer(b);
+
+            Matrix matrix = new Matrix();
+            matrix.setScale(1, -1);
+
+            bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, false);
+
+            if (onTakePhotoListener != null) {
+                onTakePhotoListener.onTake(bitmap);
             }
 
         }).start();
     }
 
 
-    private boolean isNeedFocus=true; //是否需要聚焦
-    final long FLAG_MAX_DURATION=1000;
-    final long FLAG_MAX_SPACE=50;
-    long downTime=0;
+    private boolean isNeedFocus = true; //是否需要聚焦
+    final long FLAG_MAX_DURATION = 1000;
+    final long FLAG_MAX_SPACE = 50;
+    long downTime = 0;
     float startX;
     float startY;
     private int focusX;     //聚焦的x坐标
@@ -221,23 +223,23 @@ public class CameraPreviewView extends EGLSurfaceView {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (!isNeedFocus){
+        if (!isNeedFocus) {
             return super.onTouchEvent(event);
         }
-        switch (event.getAction()){
+        switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                downTime=System.currentTimeMillis();
-                startX=event.getX();
-                startY=event.getY();
+                downTime = System.currentTimeMillis();
+                startX = event.getX();
+                startY = event.getY();
                 break;
             case MotionEvent.ACTION_UP:
-                long duration=System.currentTimeMillis()-downTime;
-                float space=Math.max(Math.abs(event.getX()-startX),Math.abs(event.getY()-startY));
+                long duration = System.currentTimeMillis() - downTime;
+                float space = Math.max(Math.abs(event.getX() - startX), Math.abs(event.getY() - startY));
 //                Log.d("wys","[onTouchEvent]  duration:"+duration+"  space:"+space);
-                if (duration<FLAG_MAX_DURATION&&space<FLAG_MAX_SPACE){
+                if (duration < FLAG_MAX_DURATION && space < FLAG_MAX_SPACE) {
                     focusX = (int) event.getX();
                     focusY = (int) event.getY();
-                    camera.newFocus(focusX,focusY);
+                    camera.newFocus(focusX, focusY);
                 }
                 break;
         }
@@ -245,17 +247,39 @@ public class CameraPreviewView extends EGLSurfaceView {
 
     }
 
+    public void pausePreview() {
+        if (camera != null) {
+            camera.pausePreview();
+        }
+    }
+
+    public void resumePreview() {
+        if (camera != null) {
+            camera.resumePreview();
+        }
+    }
+
+
     public void setOnTakePhotoListener(OnTakePhotoListener onTakePhotoListener) {
         this.onTakePhotoListener = onTakePhotoListener;
     }
 
-    public interface OnTakePhotoListener{
+    public interface OnTakePhotoListener {
         void onTake(Bitmap bitmap);
     }
 
-    public void setFocusListener(CCamera.IFocusListener listener){
+    public void setFocusListener(CCamera.IFocusListener listener) {
         camera.setFocusListener(listener);
     }
 
+    public void playSoundEffect(Activity activity){
+
+        RingtoneManager rm = new RingtoneManager(activity);
+
+        Ringtone ringtone = rm.getRingtone(activity,Uri.parse("file:///system/media/audio/ui/camera_click.ogg"));
+
+        ringtone.play();
+
+    }
 
 }

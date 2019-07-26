@@ -8,6 +8,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.hardware.Camera;
 import android.media.MediaFormat;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -72,7 +75,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         height = (int) (scale * size.height);
-        width = (int) (scale * size.width) - 380;
+        width = (int) (scale * size.width);
 
 
         super.onCreate(savedInstanceState);
@@ -119,8 +122,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-
-
+        cameraPreviewView.switchCamera(1);
+        cameraPreviewView.previewAngle(this);
     }
 
     @Override
@@ -144,6 +147,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         cameraPreviewView.takePhoto();
 
+        playSystemSound();
+
+
         if(cameraPreviewView != null){
 //            cameraPreviewView.release();
         }
@@ -157,6 +163,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             mediaEncode.stopRecord();
             mediaEncode = null;
         }
+
+
+    }
+
+    public void playSystemSound(){
 
 
     }

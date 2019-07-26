@@ -97,6 +97,17 @@ public class CCamera {
 
     }
 
+    public void pausePreview(){
+        if(camera != null){
+            camera.stopPreview();
+        }
+    }
+
+    public void resumePreview(){
+        if(camera != null){
+            camera.startPreview();
+        }
+    }
 
     private Camera.Size getFitSize(List<Camera.Size> sizes) {
 

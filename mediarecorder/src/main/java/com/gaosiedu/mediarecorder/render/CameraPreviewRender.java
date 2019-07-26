@@ -8,15 +8,12 @@ import android.opengl.Matrix;
 
 import com.gaosiedu.mediarecorder.R;
 import com.gaosiedu.mediarecorder.listener.OnTakePhotoListener;
-import com.gaosiedu.mediarecorder.util.DisplayUtil;
 import com.gaosiedu.mediarecorder.util.ImageTextureUtil;
 import com.gaosiedu.mediarecorder.util.ShaderUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
-
-import javax.microedition.khronos.opengles.GL;
 
 
 public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture.OnFrameAvailableListener {
@@ -27,7 +24,10 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
             -1f, 1f,
             1f, 1f,
 
-//            0f, 0f,
+//            0f, 0f,。。
+
+
+
 //            0f, 0f,
 //            0f, 0f,
 //            0f, 0f,
@@ -427,14 +427,14 @@ public class CameraPreviewRender extends BaseEGLRender implements SurfaceTexture
 
     public void takePhoto(int cameraId) {
 
-        Matrix.setIdentityM(rotateMatrix,0);
-
-        if (cameraId == 0) {
-            setRotateMatrix(180,1,0,0);
-        }else{
-            setRotateMatrix(180,0,0,1);
-            setRotateMatrix(180,0,1,0);
-        }
+//        Matrix.setIdentityM(rotateMatrix,0);
+//
+//        if (cameraId == 0) {
+//            setRotateMatrix(180,1,0,0);
+//        }else{
+//            setRotateMatrix(180,0,0,1);
+//            setRotateMatrix(180,0,1,0);
+//        }
         isTakePhoto = true;
     }
 
